@@ -1,0 +1,189 @@
+---
+title: "Ejercicios 6"
+author: "Nícolas Farfán Cheneaux"
+date: '2022-06-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library("BSDA")
+library("ggplot2")
+library("dplyr")
+```
+### Actividad 1: Buscar y resolver un ejemplo de uso de la prueba z con una cola.
+Se selecciona una muestra de 64 observaciones de una población normal. La media de la muestra es 215 y la sd es 15, media poblacional de 218, Lleve a cabo la hipotesis con significancia 0.03 H0: mu >= 200, H1: mu < 220
+
+```{r}
+grafico_densidad = ggplot(data = data.frame(x = c(100, 300)), aes(x)) +
+  stat_function(fun = dnorm, n = 64, args = list(mean =215, sd = 15)) + ylab("") +
+  scale_y_continuous(breaks = NULL) + xlab("Observaciones") + ylab("Densidad") + ggtitle("Función de densidad (distribución normal)") + theme_bw() +
+  geom_vline(xintercept = 218,cex=1.2,colour ="darkred",linetype="longdash") + geom_text(aes(x=227, label="xbar", y=0.0), colour ="darkred",size=5) + geom_vline(xintercept = 215,cex=1.2,colour ="coral3",linetype="longdash") + geom_text(aes(x=210, label="mu", y=0.00001), colour ="coral3",size=5)  
+grafico_densidad
+```
+
+##### Hipótesis Nula e Hipótesis Alternativa
+$$
+H_{0} \geq 200\\H_{a} < 200
+$$
+```{r}
+#Datos
+mu=220
+sigma = 15
+x_bar=215
+n=64
+#Normalización
+z = (x_bar-mu)/(sigma/sqrt(n))
+z
+#Confianza
+alfa = 0.03
+confianza = 1-alfa
+z_alfa = qnorm(alfa)
+z_alfa
+```
+**El valor de z es -2.666667, mientras que la zona de rechazo es  z < -1.880794, por lo tanto se rechaza la hipótesis nula.**
+```{r}
+dnorm_limit <- function(x) {
+    y <- dnorm(x)
+    y[x < z_alfa  |  x > -z_alfa] <- NA
+    return(y)
+}
+
+# ggplot() with dummy data
+grafico_densidad = ggplot(data.frame(x = c(-3, 3)), aes(x = x)) + 
+  stat_function(fun = dnorm_limit, geom = "area", fill = "blue", alpha = 0.2) +  stat_function(fun = dnorm) +
+  xlab("Observaciones") + ylab("Densidad") + ggtitle("Función de densidad") + 
+  theme_bw() + geom_vline(xintercept = (x_bar-mu)/(sigma/sqrt(n)),cex=1.2,colour ="darkred") + 
+  geom_text(aes(x=(x_bar-mu)/(sigma/sqrt(n))+0.2, label="z", y=0.0), colour ="darkred",size=10)
+
+plot(grafico_densidad)
+```
+
+### Actividad 2: Buscar y resolver un ejemplo de uso de la prueba t con una cola.
+
+Una muestra de 24 sujetos privados de libertad, obtuvo una media de 50 con una desviación típica de 9, media muestral = 60 en una prueba de razonamiento abstracto. En los últimos 5 años, los resultados obtenidos indicaban una media de 48. ¿De acuerdo a estos resultados se puede concluir que el promedio de la población de infractores ha aumentado en comparación a los últimos cinco años? sea alfa 0.05
+
+
+```{r}
+library("ggplot2")
+grafico_densidad = ggplot(data = data.frame(x = c(20, 80)), aes(x)) +
+  stat_function(fun = dt, n = 100, args = list(x =48, df = 24)) + ylab("") +
+  scale_y_continuous(breaks = NULL) + xlab("Infractores") + ylab("Densidad") + ggtitle("Función de densidad (Distribución t)") + theme_bw() +
+  geom_vline(xintercept = 50,cex=1.2,colour ="darkred",linetype="longdash") + geom_text(aes(x=52, label="xbar", y=0.0), colour ="darkred",size=5) + geom_vline(xintercept = 48,cex=1.2,colour ="coral3",linetype="longdash") + geom_text(aes(x=46, label="mu", y=0.001), colour ="coral3",size=5)  
+grafico_densidad
+```
+
+##### Hipótesis Nula e Hipótesis Alternativa
+$$
+H_{0} \leq 48\\H_{a} > 48
+$$
+```{r}
+#Datos
+mu=48 # Hipotesis
+s = 9 # Desviacion estandar poblacional
+x_bar=50 # Media muestral
+n=24 # n° de muestra aleatoria
+#Normalización
+t = (x_bar-mu)/(s/sqrt(n))
+t
+#Confianza
+alfa = 0.05
+confianza = 1-alfa
+t_alfa = qt(alfa/2,df = n-1)
+t_alfa
+```
+**El valor de t es 1.088662, mientras que la zona de rechazo es  t > -2.068658, por lo tanto se rechaza la hipótesis nula, es decir que el promedio de la población de infractores no ha aumentado en comparación a los últimos cinco años**
+```{r}
+dnorm_limit <- function(x) {
+    y <- dnorm(x)
+    y[x < t_alfa  |  x > -t_alfa] <- NA
+    return(y)
+}
+# ggplot() with dummy data
+grafico_densidad = ggplot(data.frame(x = c(-3, 3)), aes(x = x)) + 
+  stat_function(fun = dnorm_limit, geom = "area", fill = "blue", alpha = 0.2) +  stat_function(fun = dnorm) +
+  xlab("Infractores") + ylab("Densidad") + ggtitle("Función de densidad") + 
+  theme_bw() + geom_vline(xintercept = (x_bar-mu)/(s/sqrt(n)),cex=1.2,colour ="darkred") + 
+  geom_text(aes(x=(x_bar-mu)/(s/sqrt(n))+0.2, label="t", y=0.0), colour ="darkred",size=10)
+plot(grafico_densidad)
+```
+
+### Actividad 3: Buscar y resolver un ejemplo de uso de la prueba chi para varianza con dos colas.
+Una empresa de transportes desea determinar si el numero de personas que viaja dia a dia tiene no una varianza poblacional mayor a 20 en su grado de endurecimiento. Se realiza un muestreo de 34 elementos y se obtiene una varianza muestral de 50,51. Realizar la prueba de hipótesis con alfa = 0.05
+
+```{r}
+grafico_densidad = ggplot(data = data.frame(x = c(0, 30)), aes(x)) +
+  stat_function(fun = dchisq, n = 101, args = list(x =15, df = 19)) + ylab("") +
+  scale_y_continuous(breaks = NULL) + xlab("Puntaje") + ylab("Densidad") + ggtitle("Función de densidad") + theme_bw() +
+  geom_vline(xintercept = 20.98,cex=1.2,colour ="darkred") + geom_text(aes(x=21, label="S^2", y=0.0), colour ="darkred",size=5) 
+grafico_densidad
+```
+
+##### Hipótesis Nula e Hipótesis Alternativa
+$$
+H_{0}:\sigma^2 > 20\\H_{a}: \sigma^2 \leq 20
+$$
+```{r}
+#Datos
+sigma2 = 20
+n = 34
+s2 = 50.51
+#Normalización
+chi = (n-1)*s2/(sigma2)
+chi
+#Confianza
+alfa = 0.05
+confianza = 1-alfa
+chi_alfa = qchisq(alfa,df = n-1,lower.tail = F) #Lower.tail se relaciona con <= de la hipótesis nula.
+chi_alfa
+```
+
+**El valor de chi es 83.3415, mientras que el intervalo de confianza es [-47.39988,47.39988]. Esto implica que chi no está dentro del intervalo de confianza, por lo que se rechaza la H0 y no se puede concluir que el numero de personas que viaja dia a dia es mayor a 20.**
+
+### Actividad 4: Buscar/crear y resolver un ejemplo de bondad de ajuste Chi cuadrado, utilice el conjunto de datos Iris disponible en R data(“iris”).
+Dados los datos Iris, dadas las especies setosa, versicolor, virginica, con una proporcion de 3:2:1
+```{r}
+set.seed(10) # Muestra artificial
+eyetypes = c(50, 75, 30)
+res = chisq.test(eyetypes, p = c(1/2, 1/3, 1/6))
+res
+```
+
+### Actividad 5: Buscar/crear y resolver un ejemplo de prueba de hipótesis en una proporción binomial, de una o dos colas.
+Suponga que el 20% de los adultos de Madrid tienen deficit de vitamina E   . Se encuestan en la calle a 400 adultos y 340 de ellos tienen deficit. Considerando un nivel de significancia de .05, ¿podemos rechazar lahipótesis nula de que la proporción de adultos con deficit permanece por debajo del 30%?
+Ahora se define la hipotesís nula como: H0 : μ 0 <= 0.30
+```{r}
+n = 400
+prom = 340/n
+X = 340
+p0 = 0.3
+print(prop.test(X, n, p = p0, alt="greater", correct =FALSE))
+```
+**Con los resultados obtenidos y el p-value mayora 0.05, se acepta la hipotesís nula. Es decir, la proporción de los adultos con deficit permanece debajo del 30%.**
+
+### Actividad 6: Buscar/crear y resolver un ejemplo de prueba de hipótesis en el que aplique la prueba del signo.
+
+Un director de Hollywood para probar el éxito de sus nuevas películas (la primera de animación y la segunda de comedia), realiza una encuesta a 25 personas para ver la reacción al ver ambas, obteniendo que 14 de estos prefieren la de animación y el resto la de comedia, ¿Es posible rechazar la noción que ambas películas tienen la misma preferencia?
+```{r}
+btest = binom.test(14, 25, conf.level = 0.95)
+btest
+```
+**Con un nivel de significancia de 0.05 y un p-value mayor a 0.05. No se rechaza que las 2 películas tienen la misma preferencia.**
+
+### Actividad 7: Buscar/crear y resolver un ejemplo de prueba de hipótesis en el que aplique la prueba de Wilcoxon para una muestra.
+```{r}
+datos = data.frame(iris)
+tabla = table(select(datos, Species))
+datos = select(datos, Petal.Length, Species)
+datos_petalos = filter(datos, Species == "setosa")
+res <- wilcox.test(datos_petalos$Petal.Length, mu = 3.87,conf.int=0.95)
+res
+```
+**Con un p-value menor al 0.05 se desprende que la mediana del largo de petalos del iris setosa difiere del 3.87cm**
+
+## Bibliografía
+
+##### Ejemplo 1:
+https://www.youtube.com/watch?v=rJ1CGKqC95g&t=370s
+
+##### Ejemplo 2:
+https://www.youtube.com/watch?v=MdP4G-wsCkI

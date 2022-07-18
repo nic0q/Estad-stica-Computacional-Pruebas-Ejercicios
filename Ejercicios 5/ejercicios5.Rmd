@@ -1,0 +1,102 @@
+---
+title: "Ejercicios 5"
+author: "Nícolas Farfán Cheneaux"
+date: '2022-05-24'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(pacman)
+library(SciViews)
+library(knitr)
+p_load(data.table, fixest, lattice, magrittr, ggplot2, kableExtra,dplyr)
+```
+
+### **Introducción**
+En el presente se estimará un parámetro de la **Distribución Exponencial** mediante el método de la máxima verosimilitud o **Maximum Likelihood**.
+
+#### **Funcion de densidad**
+Los primeros N terminos de la secuencia de Xn terminos son variables aleatorias con una distribución exponencial.
+$$
+f_{x}(xj) = 
+ \begin{cases} 
+      λ_{0} e(-λ_{0}x_{j}) & x_{j} \in R_{x} \\
+      0 & otro
+   \end{cases}
+$$
+
+#### **Función de Máxima Verosimilitud**
+$$
+L(λ;x1,...,x_{n}) = λ^n e(-λ\sum_{j = 1}^{n} x_{j})
+$$
+
+#### **Forma Logarítmica**
+$$
+l(λ;x1,...,x_{n}) = n ln(λ) - λ \sum_{j = 1}^{n} f(x_{j})
+$$
+
+###  **Estimación de lambda**
+
+#### **Paso 1: Generar Datos**
+```{r}
+N = 60 # Tamaño de la muestra
+lambda = 3 # lambda
+exp_data = rexp(n = N, rate=lambda) # Datos aleatorios dados por la distribución exponencial
+```
+
+#### **Paso 2: Derivar la función de verosimilitud**
+```{r}
+exp_ll <- function(lambda,x,n)(n*ln(lambda)-lambda*sum(x)) # Función de verosimilitud en forma logaritmica
+exp_values = seq(1,N) # Valores distintos de lambda para la exponencial
+# Grafico la función de verosimilitud
+plot(exp_values, exp_ll(lambda = exp_values, x = exp_data, n = 200), type='p',xlab ="lambda_vals", ylab = 'log lik_vals', col = "black")
+```
+
+#### **Paso 3: Estimación por Máxima Verosimilitud**
+```{r}
+# log likelihood
+exp_data <- rexp(n = N, rate = lambda)
+exp_ll <- function(lambda,x,n)-(n*ln(lambda)-lambda*sum(x)) # Función de verosimilitud en forma logaritmica multiplicado por -1
+MLE_estimates <- optim(fn=exp_ll,   # Función de verosimilitud
+                       par=1, # Valor inicial
+                       lower = c(-Inf, -Inf),       # Límite inferior
+                       upper = c(Inf, Inf),         # Límite superior
+                       hessian= TRUE,                # Hessiano
+                       method = "L-BFGS-B",         # Metodo de Optimización
+                       n = N,                     # n
+                       x = exp_data)             # x
+# Estimaciones
+MLE_par <- MLE_estimates$par # Valor de lambda estimado
+MLE_SE <- sqrt(diag(solve(MLE_estimates$hessian))) # sd
+cat("Valor Original lambda:",lambda)
+```
+```{r echo=FALSE}
+MLE <- data.table(param = c("lambda"),
+                  estimates = MLE_par,
+                  sd = MLE_SE)
+kable(MLE)%>%
+kable_styling(full_width = F)
+```
+
+#### **Paso 4: Graficar Estimaciones**
+```{r}
+log_like_graph <- function(x = exp_values, n = N){ 
+  lambda = MLE_par # valor de lamdba encontrado
+  log_like_g <- (n*ln(lambda)-lambda*sum(x)) # Función de máxima verosimilitud forma logarítmica
+  return (log_like_g)
+}
+# Vectorizar
+log_like_graph <- Vectorize(log_like_graph) 
+# Graficar
+lambda_graph <- ggplot(data = data.frame(lambda = 0), mapping = aes(lambda = lambda)) + stat_function(fun = log_like_graph) + xlim(0,N) + theme_bw() +xlab("lambda_vals") + ylab('log lik_vals')
+lambda_graph
+```
+
+### **Conclusiones**
+Dado a que se ha revisado y realizado en repetidas ocasiones este test utilizando la función optim, se puede determinar que se obtiene un error o variación en la mayoría de las ocasiones menor a 0.5, por lo tanto se puede concluir que esta estimación por el método de máxima verosimilitud es en gran medida acertada y cercana al valor original del lambda (3)
+
+
+### **Referencias**
+- Taboga, Marco (2021). "Exponential distribution - Maximum Likelihood Estimation", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix. https://www.statlect.com/fundamentals-of-statistics/exponential-distribution-maximum-likelihood.
+- Giglio, Juan (2022). "Ejercicios 05 - Ejemplo de Máxima verosimilitud" https://rpubs.com/jgiglio/909231
+- Maximum Likelihood Estimation in R: https://www.youtube.com/watch?v=w3drLH-DFpE&t=77s&ab_channel=CalebLikesR

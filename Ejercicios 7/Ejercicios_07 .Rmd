@@ -1,0 +1,207 @@
+---
+title: "Ejercicios 7"
+author: "Nícolas Farfán Cheneaux"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+#### 1.- Cree su propio ejemplo de regresión lineal simple utilizando un conjunto de datos con dos variables y la función lm. Grafique utilizando las funciones plot y abline.
+
+Utilizando un archivo de texto data.csv que contiene información sobre el tiempo de duración de las sesiones de hemodiálisis (meses) y número de quistes en pacientes hospitalarios. ¿Existe alguna relación entre el tiempo y el número de quistes?
+
+```{r}
+library("ggplot2")
+datos = read.csv2(file = "data.csv")
+
+tiempo = as.numeric(datos$Tiempo)
+quistes = as.numeric(datos$Quistes)
+mod = lm(quistes ~ tiempo, datos)
+plot(tiempo, quistes)
+title("Número de quistes y tiempo en hemodiálisis")
+abline(mod)
+
+```
+
+Por lo tanto, el modelo que se ajusta a los datos es:
+
+$$ y = mx + c $$
+$$ y = 1024*10^{-5}m + 4155*10^{-5}$$
+
+Podemos obtener mas informacion del modelo construido:
+
+```{r}
+summary(mod)
+```
+
+Uno de los datos importantes es el **coeficiente de determinación**
+
+```{r}
+print(summary(mod)$r.squared)
+```
+
+Si observamos los p-values,  solo el del intercepto es mayor a 0,05. Entonces:
+
+* **Se acepta la hipótesis Nula de que el intercepto no es representativo y vale 0.**
+
+* **Se rechaza la hipótesis Nula deel del intercepto es mayor a 0,05, pero el de tiempo es muy bajo. Por lo tanto: que la pendiente de la recta es 0**
+
+Considerando lo anterior, el modelo se puede reducir a:
+
+$$ y = 1024*10^{-5}m + 0$$
+Finalmente, podemos generar una zona de confianza para ver que puntos estan representados por el modelo generado
+
+```{r}
+confianza = confint(mod, level = 0.95)
+print(confianza)
+
+
+grafico = ggplot(datos,aes(x=tiempo, y=quistes, label= "")) +
+  geom_point(aes(tiempo,quistes),datos,color = "green")+
+  theme_bw() + ylab("Numero de quistes")+
+  xlab("Tiempo en hemodiálisis en meses") + ggtitle("Número de quistes y tiempo en hemodiálisis") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(check_overlap = TRUE) +
+  geom_line(aes(tiempo,quistes),datos,color="blue",cex=0.1) +
+  geom_smooth(method ="lm", formula = y ~ x,level=0.95)
+plot(grafico)
+```
+
+De lo anterior, **podemos concluir** que utilizando un nivel de confianza del 95% **si existe una relación entre tiempo y el número de quistes.** Si es directa o no va a depender bien del tiempo, ya que puede variar en algunos casos, pero generalmente tiende a ser directa. Sin embargo, el **modelo propuesto no es el adecuado para todos los puntos de datos** ya que el coeficiente de determinación no se acerca a 0,99, e incluso con zonas de confianza se puede observar que varios puntos quedan fuera de estas zonas.
+
+#### 2.- Utilice el modelo de regresión lineal simple de la actividad 1 para predecir 5 nuevos registros e incorpórelos a su conjunto de datos. Calcule nuevamente la regresión lineal simple ¿Se observa algún cambio en los coeficientes?
+
+```{r}
+df = data.frame(tiempo,quistes)
+tiempo = c(4,5,8,9,10)
+predict.lm(mod, data.frame(tiempo = tiempo))
+quistes = c(0.8252472,0.9276830,1.2349906,1.3374264,1.4398623)
+df2 = data.frame(tiempo = tiempo, quistes = quistes)
+df3 = rbind(df,df2)
+
+tiempo = df3$tiempo
+quistes = df3$quistes
+```
+
+Ahora, volvemos a realizar toda la regresión lineal simple:
+
+```{r}
+mod = lm(quistes ~ tiempo, df3)
+plot(tiempo, quistes)
+title("Número de quistes y tiempo en hemodiálisis")
+abline(mod)
+```
+
+Por lo tanto, el modelo que se ajusta a los datos es:
+
+$$ y = 1047*10^{-5}m + 3888*10^{-6}$$
+
+Podemos obtener mas informacion del modelo construido:
+
+```{r}
+summary(mod)
+```
+
+Uno de los datos importantes es el **coeficiente de determinación**
+
+```{r}
+print(summary(mod)$r.squared)
+```
+
+Si observamos los p-values, solo el del intercepto es mayor a 0,05. Por lo tanto:
+
+* **Se acepta la hipótesis Nula de que el intercepto no es representativo y vale 0.**
+
+* **Se rechaza la hipótesis Nula de que la pendiente de la recta es 0**
+
+Considerando lo anterior, el modelo se puede reducir a:
+
+$$ y = 1047*10^{-5}m + 0$$
+Finalmente, podemos generar una zona de confianza para ver que puntos estan representados por el modelo generado
+
+```{r}
+confianza = confint(mod, level = 0.95)
+print(confianza)
+
+
+grafico = ggplot(df3,aes(x=tiempo, y=quistes, label= "")) +
+  geom_point(aes(tiempo,quistes),df3,color = "green")+
+  theme_bw() + ylab("Numero de quistes")+
+  xlab("Tiempo en hemodiálisis en meses") + ggtitle("Número de quistes y tiempo en hemodiálisis") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(check_overlap = TRUE) +
+  geom_line(aes(tiempo,quistes),df3,color="blue",cex=0.1) +
+  geom_smooth(method ="lm", formula = y ~ x,level=0.95)
+plot(grafico)
+```
+
+De lo anterior, **podemos concluir** que utilizando un nivel de confianza del 95% **todavia existe una relación entre tiempo y el número de quistes.** Si es directa o no va a depender bien del tiempo, ya que puede variar en algunos casos, pero generalmente tiende a ser directa. Sin embargo, el **modelo propuesto sigue siendo un modelo no adecuado para todos los puntos de datos** ya que el coeficiente de determinación no se acerca a 0,99, e incluso con zonas de confianza se puede observar que varios puntos quedan fuera de estas zonas.
+
+#### 3.- Tome un punto cualquiera de su conjunto de datos y multiplíquelo por 100, calcule nuevamente la regresión lineal simple ¿Se observa algún cambio en los coeficientes?
+
+```{r}
+datos = read.csv2(file = "data.csv")
+tiempo = as.numeric(datos$Tiempo)
+quistes = as.numeric(datos$Quistes)
+
+df = data.frame(tiempo, quistes)
+df2 = data.frame(tiempo = 10*100, quistes = 0.8 * 100)
+df = rbind(df, df2)
+tiempo = df$tiempo
+quistes = df$quistes
+```
+
+Ahora, volvemos a realizar toda la regresión lineal simple
+
+
+```{r}
+mod = lm(quistes ~ tiempo, df)
+plot(tiempo, quistes)
+title("Número de quistes y tiempo en hemodiálisis")
+abline(mod)
+```
+
+Por lo tanto, el modelo que se ajusta a los datos es:
+
+$$ y = 2,18m + 0,084$$
+
+Podemos obtener mas informacion del modelo construido:
+
+```{r}
+summary(mod)
+```
+
+Uno de los datos importantes es el **coeficiente de determinación**
+
+```{r}
+print(summary(mod)$r.squared)
+```
+
+Si observamos los p-values, el del intercepto es mayor a 0,05, pero el de tiempo es muy bajo. Por lo tanto:
+
+* **Se acepta la hipótesis Nula de que el intercepto no es representativo y vale 0.**
+
+* **Se rechaza la hipótesis Nula de que la pendiente de la recta es 0**
+
+Considerando lo anterior, el modelo se puede reducir a:
+
+$$ y = 2,18m + 0$$
+
+Finalmente, podemos generar una zona de confianza para ver que puntos estan representados por el modelo generado
+
+```{r}
+confianza = confint(mod, level = 0.95)
+print(confianza)
+grafico = ggplot(df,aes(x=tiempo, y=quistes, label= "")) +
+  geom_point(aes(tiempo,quistes),df,color = "green")+
+  theme_bw() + ylab("Numero de quistes")+
+  xlab("Tiempo en hemodiálisis en meses") + ggtitle("Número de quistes y tiempo en hemodiálisis") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(check_overlap = TRUE) +
+  geom_line(aes(tiempo,quistes),df,color="blue",cex=0.1) +
+  geom_smooth(method ="lm", formula = y ~ x,level=0.95)
+plot(grafico)
+```
+
+De lo anterior, se concluye que utilizando un nivel de confianza del 95% todavia existe una relación entre tiempo y el número de quistes. Si es directa o no va a depender bien del tiempo, ya que puede variar en algunos casos, sin embargo tiende a ser directa. No obstante el modelo propuesto sigue siendo un modelo no adecuado para todos los puntos de datos, ya que el coeficiente de determinación no se acerca a 0,99, e incluso con zonas de confianza se puede observar que varios puntos quedan fuera de estas zonas.
+
+**A pesar de que hubo un cambio en uno de los datos, los coeficientes no cambiaron. Probablemente, si hubiera habido un cambio en todos los datos, entonces ahí si se hubiera podido observar un cambio en los coeficientes**

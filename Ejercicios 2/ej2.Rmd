@@ -1,0 +1,137 @@
+---
+title: "Ejercicios 2"
+author: "Nícolas Farfán Cheneaux"
+date: '2022-04-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+## Preguna 1:
+```{r}
+library(gtools)
+```
+
+## Pregunta 2: Diferencia entre permutación y combinación
+Al realizar una permutación, importa el orden de los objetos, en las combinaciones no.
+
+## Pregunta 3: explicacion de las funciones
+#### help(combinations)
+Enumera todas las posibles combinaciones del tamaño de un vector predeterminado.
+#### help(permutations)
+Enumera todas las posibles permutaciones del tamaño de un vector predeterminado.
+Parámetros de la entrada: 
+n: El tamaño inicial del vector.
+r: El tamaño del vector de salida.
+v: El vector.
+set: TRUE o FALSE si se quiere eliminar duplicados del vector.
+repeats.allowed: Si incluirá valores duplicados.
+
+## Pregunta 4
+### 1) Cantidad de posibles permutaciones con n = 14, r = 4, con y sin repetición
+```{r}
+nrow(permutations(14,4,repeats=FALSE))
+nrow(permutations(14,4,repeats=TRUE))
+```
+### 2) Cantidad de posibles combinaciones de largo 3, con a b c, con y sin repetición. 
+```{r}
+combinations(3,3,letters[1:3],repeats=FALSE)
+combinations(3,3,letters[1:3],repeats=TRUE)
+
+```
+### 3) Cantidad de posibles permutaciones con n = 30, r = 2, sin repetición
+```{r}
+nrow(permutations(30,2,repeats=FALSE))
+```
+## Pregunta 5
+#### 5a: 1) ¿Cuál es el porcentaje de supervivencia de los pasajeros y de la tripulación?¿Cuál es mayor?
+```{r}
+pAB <- function(pA, pB,pBA){
+  return ((pA * pBA) / pB)
+}
+```
+#### 5b1 ¿Cuál es el porcentaje de supervivencia de los pasajeros y de la tripulación?¿Cuál es mayor?
+```{r}
+PassengerNotSurvived = sum(apply(Titanic,c(1,4),sum)[,1][0:3])
+PassengerSurvived = sum(apply(Titanic,c(1,4),sum)[,2][0:3])
+CrewSurvived = sum(apply(Titanic,c(1,4),sum)[,2][4])
+CrewNotSurvived = sum(apply(Titanic,c(1,4),sum)[,1][4])
+
+Passenger = PassengerSurvived + PassengerNotSurvived
+Crew = CrewSurvived + CrewNotSurvived
+
+probSurvPass = (PassengerSurvived / Passenger) * 100
+probSurvCrew = (CrewSurvived / Crew) * 100
+
+print(probSurvPass)
+print(probSurvCrew)
+```
+#### 5b2 ¿Cuál es la probabilidad de que una mujer de la tripulación sobreviva?
+```{r}
+femaleCrew = sum(apply(Titanic, c(1,2),sum)[,2][4])
+totalCrew = sum(apply(Titanic,c(1),sum)[4]) 
+totalSurvivors =  sum(apply(Titanic,4,sum)[2])
+totalPeople = sum(apply(Titanic,c(4),sum))
+survivedFemaleCrew  = sum(apply(Titanic,c(1,2,4),sum)[16])
+
+probFemaleCrew = femaleCrew / totalCrew
+probSurvivor = totalSurvivors / totalPeople
+probFemaleCrewSurv = survivedFemaleCrew/ totalSurvivors
+
+print(pAB(probFemaleCrewSurv,probFemaleCrew,probSurvivor))
+```
+#### 5b3 ¿Cuál es la probabilidad de que un(a) menor de edad sobreviva en tercera clase?
+```{r}
+child3class = apply(Titanic,c(1,3),sum)[3]
+total3class = sum(apply(Titanic,1,sum)[3])
+survivedChild3Class = apply(Titanic,c(1,3,4),sum)[11]
+
+probChild3Class = child3class/total3class
+provChild3ClassSurv = survivedChild3Class/totalSurvivors
+print(pAB(provChild3ClassSurv,probChild3Class,probSurvivor))
+```
+#### 5b4 ¿En general se cumple el código “mujeres y niños(as) primero”?
+```{r}
+niñosSurv = sum(apply(Titanic,c(4,3),sum)[,1][2])
+niñosTotal = sum(apply(Titanic,c(4,3),sum)[,1])
+propNiñosSuv = niñosSurv / niñosTotal
+propNiñosSuv
+
+hombresSurv = apply(Titanic,c(2,4,3),sum)[7]
+hombresAdultosTotal = apply(Titanic,c(3,2),sum)[2]
+hombres = hombresSurv / hombresAdultosTotal
+hombres
+
+mujeresSurv = apply(Titanic,c(2,4,3),sum)[8]
+mujeresAdultasTotal = apply(Titanic,c(3,2),sum)[,2][2]
+mujeres = mujeresSurv / mujeresAdultasTotal
+mujeres
+```
+Como se puede apreciar la proporción entre la cantidad de adultos que sobrevive, evaluada en la cantidad de hombres y mujeres adultos, es mayor por parte de las mujeres.
+Lo mismo ocurre por parte de los niños comparado con los adultos, la proporcion de supervivencia entre adultos y niños es mayor por parte de los niños.
+
+#### 5b5 Seleccione una clase de forma aleatoria, puede utilizar la función sample. ¿En la clase seleccionada se cumple el código “mujeres y niños(as) primero”?
+```{r}
+set.seed(3)
+sample(apply(Titanic, c(1), sum),1)
+
+niñosSurv1Class = apply(Titanic,c(1,2,3,4),sum)[17]
+niñosNoSurv1Class = apply(Titanic,c(1,2,3,4),sum)[1]
+niñosTotal1C = niñosSurv1Class + niñosNoSurv1Class
+supNi1Class = niñosSurv1Class / niñosTotal1C
+supNi1Class
+hombresSurv1Class = apply(Titanic,c(1,2,3,4),sum)[25]
+hombresNoSurv1Class = apply(Titanic,c(1,2,3,4),sum)[9]
+hombresTotal1C = hombresSurv1Class + hombresNoSurv1Class
+supHom1Class = hombresSurv1Class / hombresTotal1C
+supHom1Class
+mujeresSurv1Class = apply(Titanic,c(1,2,3,4),sum)[29]
+mujeresNoSurv1Class = apply(Titanic,c(1,2,3,4),sum)[13]
+mujeresTotal1C = mujeresSurv1Class + mujeresNoSurv1Class
+supMuj1Class = mujeresSurv1Class / mujeresTotal1C
+supMuj1Class
+```
+Como se puede ver la probabilidad de las mujeres adultas es mayor a la de los hombres adultos, lo mismo ocurre con los niños
+

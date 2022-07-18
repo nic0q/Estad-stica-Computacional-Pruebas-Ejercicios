@@ -1,0 +1,121 @@
+---
+title: "Ejercicios 4"
+author: "Nícolas Farfán Cheneaux"
+date: '2022-05-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library("ggplot2")
+library("plotly")
+library("BHH2")
+knitr::opts_chunk$set(echo = TRUE)
+#Lectura de datos
+datos=read.csv("bank.csv",sep=";",header=T,check.names = F)
+```
+El presente archivo de datos llamado bank.csv fue extraído de **https://archive.ics.uci.edu/ml/datasets/Bank+Marketing#**
+
+## Distribución de Frecuencia
+### Tabla de frecuencias de la variable cualitativa **Trabajo - Job**
+```{r}
+#Tabla de frecuencia variables cuanlitativas
+  #Frecuencia
+fi=-as.numeric(sort(-table(datos$job))) #Frecuencia absoluta
+fac=cumsum(fi)                           #Frecuencia acumulada
+fri=as.numeric(fi/sum(fi))*100           #Frecuencia relativa
+frac=cumsum(fri)                         #Frecuencia relativa acumulada
+job=c("admin.","unknown","unemployed","management","housemaid","entrepreneur","student",
+                                       "blue-collar","self-employed","retired","technician","services")
+  #Tabla
+frec_job=data.frame(job,fi,fac,fri=round(fri,2),frac=round(frac,2))
+  #Visualización
+knitr::kable(frec_job)
+```
+
+### Tabla de frecuencias de la variable cuantitativa **Edad - Age**
+```{r}
+  #Frecuencia
+fi=as.numeric(table(datos$age))  #Frecuencia absoluta
+fac=cumsum(fi)                    #Frecuencia acumulada
+fri=as.numeric(fi/sum(fi))*100    #Frecuencia relativa
+frac=cumsum(fri)                  #Frecuencia relativa acumulada
+  #Tabla
+edad=sort(unique(datos$age))
+frec_edad=data.frame(edad,fi,fac,fri=round(fri,2),frac=round(frac,2))
+  #Visualización
+knitr::kable(head(frec_edad,5))
+knitr::kable(tail(frec_edad,5))
+```
+
+### Tabla de frecuencias de la variable cuantitativa **Edad - Age**
+```{r}
+#Tabla de frecuencia variables cuantitativas
+  #Frecuencia
+edad=sort(unique(datos$age))       # Ordenar los datos
+n = length(edad)                    # Número de elementos de edad
+k = round(1 + 3.3 * log(n))         # Aplicamos regla de Sturges
+h = round((max(edad)-min(edad))/k)  # Cálculo de intervalo
+
+ #Crear intervalos
+intervalos=hist(datos$age, plot=FALSE, breaks = k)$breaks
+intervalos=paste("(",intervalos[1:(length(intervalos)-1)],"-",intervalos[2:(length(intervalos))],"]",sep="")
+intervalos[1]="[0-5]"
+
+ #Cálculo de frecuencia
+fi = hist(datos$age
+          , plot=FALSE, breaks = k)$counts      #Frecuencia con intervalos
+fac=cumsum(fi)                                            #Frecuencia acumulada
+fri=as.numeric(fi/sum(fi))*100                            #Frecuencia relativa
+frac=cumsum(fri)                                          #Frecuencia relativa acumulada  
+
+frec_edad=data.frame(edad=intervalos,fi,fac,fri=round(fri,2),frac=round(frac,2))
+knitr::kable(frec_edad)
+```
+
+##### ¿Qué ocurre al construir directamente una tabla de frecuencia?¿Qué conclusiones se pueden extraer?
+Particularmente para el caso de la variable edad, la tabla de frecuencia generada sirve para extraer la cantidad de veces que un dato se repite en todo el conjunto de datos, entonces por posible organizar que datos aparecen de manera más repetida que otros. Y a partir de este dato se pueden calcular otros como medidas de tendencia central, de posición, etc.
+
+### Gráfico de Barras Variable Cualitativa **Job - Trabajo**
+```{r}
+p=ggplot(data=frec_job, aes(x=reorder(job, -fri),y=fi)) +
+  geom_bar(stat="identity",fill="#d8b186",alpha=0.8) + theme_minimal() + 
+  labs(title="Frecuencia absoluta - Trabajo", x="Trabajo", y = "Frecuencia absoluta")
+ggplotly(p)
+```
+
+### Gráfico Tipo Pie Variable Cualitativa **Job - Trabajo**
+```{r}
+p=ggplot((frec_job), aes(x="", y=fri, fill=reorder(job, -fri))) +
+  geom_bar(stat="identity", width=1) + coord_polar("y", start=0) + theme_minimal() +
+  labs(title="Frecuencia relativa - Trabajo", x="Trabajo", y = "Frecuencia relativa (%)")
+p=p + scale_fill_brewer(palette="PuOr",aesthetics = "colour",name = "Trabajo de Cliente")
+plot(p)
+```
+
+### Gráfico Tipo Pareto Cualitativa **Job - Trabajo**
+```{r}
+p=ggplot(data=frec_job, aes(x=reorder(job, -fri),y=fi)) +
+  geom_bar(stat="identity",fill="#d8b186",alpha=0.8) + theme_minimal() + 
+  labs(title="Frecuencia absoluta y absoluta acumulada - Trabajo", x="Trabajo", y = "Frecuencia absoluta")
+p = p + geom_point(aes(y=fac))
+ggplotly(p)
+```
+
+### Diagrama De Punto Variable Cuantitativa **Edad - Age**
+```{r}
+dotPlot(datos$age,xlab = "EDAD (años)",)
+```
+
+### Histograma Variable Cuantitativa **Edad - Age**
+```{r}
+grafico=ggplot(datos,aes(age)) # Gráfico y datos base
+#Histograma (25 niveles) (colores- http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf)
+grafico = grafico + geom_histogram(bins=30,fill="#d8b186",color="#d8b186",alpha=0.8)
+grafico = grafico + theme_bw() # Visualización estándar en blanco y negro
+grafico = grafico + ylab("Frecuencia absoluta (edad)") + xlab("Edad (años)")
+ggplotly(grafico)
+```
+
+##### ¿Qué diferencia aprecia entre ambos tipos de representaciones?
+Como se puede apreciar los gráficos de puntos son útiles para mostrar datos cuantitativos de una forma organizada, estos usan varios puntos para trazar datos a lo largo de un eje ordinal.
+En cambio el histograma generado, muestra la forma de los datos. El eje horizontal muestra sus valores de datos, con cada barra correspondiendo a un rango de valores. El eje vertical muestra cuántos puntos de datos tienen valores en el rango de cada barra.

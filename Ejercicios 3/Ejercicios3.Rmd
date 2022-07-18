@@ -1,0 +1,204 @@
+---
+title: "Ejercicios 3"
+author: "Nícolas Farfán Cheneaux"
+date: '2022-04-15'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("Rlab")
+```
+
+### Ejercicio 1
+##### 1. En el proceso de fabricación de teléfonos, tres de ellos son seleccionados aleatoriamente por trabajadores para evaluar su calidad. Cada pieza es categorizada como “funcional” o “con falla” según los resultados de su evaluación. Si la probabilidad de que un teléfono no tenga fallas es 0.8, siendo la evaluación independiente entre equipos.
+##### a) Señale el tipo de variable aleatoria y la distribución que sigue.
+Variable Aleatoria Discreta.
+Distribución Binomial.   
+
+#### b) Determine la función de probabilidad de masa.
+```{r}
+p = 0.8
+n = 3
+masaBinomial <- function(x,p,n){
+  factorial(n)/(factorial(x)*factorial(n-x))*(p**x)*((1-p)**(n-x))
+}
+x = c(0:3)
+prob = c(masaBinomial(0:3,p,n))
+datos = data.frame(x ,prob)
+datos
+```
+
+#### c) Grafique la distribución.
+```{r}
+#========================
+# Preámbulo
+#========================
+rango = seq(0,3)
+distribucion = dbinom(rango, size = 3,prob = 0.8)
+datos=data.frame(rango,distribucion)
+
+#Gráfico
+library("ggplot2")
+grafico = ggplot(data=datos,aes(x=rango,y=distribucion))
+grafico = grafico + geom_bar(stat="identity",fill="lightblue3")
+grafico = grafico + theme_bw() + ggtitle("Distribución de probabilidades")
+grafico = grafico + xlab("Rango") + ylab("Probabilidad")
+plot(grafico)
+```
+
+### Ejercicio 2
+##### 2. En un estudio clínico los voluntarios son examinados para encontrar un gen asociado a la aparición de cáncer. La probabilidad de que una persona tenga el gen es 0.1. Si se asume que la evaluación de una persona es independiente de otra:
+
+##### a) Señale el tipo de variable aleatoria y la distribución que sigue.
+Variable Aleatoria Discreta.
+Distribución Binomial Negativa.
+
+##### b) ¿Cuál es la probabilidad de que cuatro o más evaluaciones deban ser efectuadas para detectar a dos personas portadoras del gen?
+```{r}
+p = 0.10 # probabilidad de tener el gen
+r = 2 # hasta obtener el r'esimo éxito (2 personas)
+x = 4 # numero de test hasta detectar a 2 personas portadoras del gen
+# P(X>=4) = 1 - P(X<=3)
+x = 3
+print(1-pnbinom(x-2,r,p)) # X >= 4
+```
+
+##### c) ¿Cuál es el número esperado de evaluaciones que debo realizar para detectar dos personas portadoras del gen?
+```{r}
+E = r/p
+print(E)
+```
+
+##### d) Grafique la distribución.
+
+```{r}
+#========================
+# Preámbulo
+#========================
+personas = seq(0,100)
+fallas = 2
+distribucion = dnbinom(x=personas, fallas, prob=0.10)
+datos=data.frame(personas,distribucion)
+#Gráfico
+library("ggplot2")
+grafico = ggplot(data=datos,aes(x=personas,y=distribucion))
+grafico = grafico + geom_bar(stat="identity",fill="lightblue3")
+grafico = grafico + theme_bw() + ggtitle("Distribución de
+probabilidades")
+grafico = grafico + xlab("Pruebas") + ylab("Probabilidad")
+plot(grafico)
+```
+
+### Ejercicio 3
+##### 3. Una empresa contrata a 800 hombres menores de 55 años. Suponga que el 30 % tiene un marcador en el cromosoma masculino que indica un mayor riesgo de cáncer de próstata.
+
+##### a) Señale el tipo de variable aleatoria y la distribución que sigue.
+Variable Aleatoria Discreta.
+Distribución Hipergeométrica, dado que no hay reposición en la muestra.
+
+##### b) Si a 10 hombres de la empresa se les hace la prueba del marcador en este cromosoma, ¿cuál es la probabilidad de que exactamente 1 hombre tenga el marcador?
+```{r}
+N = 800 # numero de elementos de la población (Total)
+k = 240 # 30% de 800 hombres que tiene el marcador
+n = 10  # tamaño de la muestra (10 hombres)
+x = 1   # Escoger a 1 hombre que tenga el marcador
+dhyper(x,k,N-k,n)
+```
+
+##### c) Si a 10 hombres de la empresa se les hace la prueba del marcador en este cromosoma, ¿cuál es la probabilidad de que más de 1 tenga el marcador?
+```{r}
+# P(x>1)
+# x > 1
+phyper(x,k,N-k,n,lower.tail = F)
+```
+
+##### d) Grafique la distribución
+```{r}
+#========================
+# Preámbulo
+#========================
+library("Rlab")
+exitos=seq(0:10) #Exitos
+distribucion = dhyper(exitos,k,N-k,n)
+datos=data.frame(exitos,distribucion)
+#Gráfico
+library("ggplot2")
+grafico = ggplot(data=datos,aes(x=exitos,y=distribucion))
+grafico = grafico + geom_bar(stat="identity",fill="lightblue3")
+grafico = grafico + theme_bw() + ggtitle("Distribución de
+probabilidades")
+grafico = grafico + xlab("Hombres con marcador de cromosoma") + ylab("Probabilidad")
+plot(grafico)
+```
+
+### Ejercicio 4
+##### 4. El número de llamadas telefónicas que llegan a una central telefónica se modela como una variable aleatoria de Poisson. Suponga que en promedio hay 8 llamadas por hora.
+
+##### a) Señale el tipo de variable aleatoria y la distribución que sigue.
+Variable Aleatoria Discreta.
+Distribución Poison
+
+##### b) ¿Cuál es la probabilidad de que haya exactamente cinco llamadas en una hora?
+```{r}
+x = 5 # Numero de llamadas que se hacen en 1 hora
+# Regla de 3
+#8 llamadas -> 1 hora
+#lambda(var)-> 1 hora
+lambda = 8
+#P(X=5)
+dpois(x,lambda)
+```
+
+##### c) ¿Cuál es la probabilidad de que haya tres llamadas o menos en una hora?
+```{r}
+# P(X<=3)
+x = 3
+# Probabilidad acumulada de x = 0 a x = 3
+ppois(x,lambda)
+```
+
+### Ejercicio 5
+##### 5. Un artículo en Knee Surgery Sports Traumatology, Arthroscopy [“Effect of Provider Volume on Resource Utilization for Surgical Procedures” (2005, Vol. 13, pp. 273–279)] mostró un tiempo medio de 129 minutos y una desviación estándar de 14 minutos para cirugía de reconstrucción de LCA para hospitales de alto volumen (con más de 300 cirugías de este tipo por año). Si un hospital de alto volumen necesita programar 10 cirugías, ¿cuáles son la media y la varianza del tiempo total para completar estas cirugías? Suponga que los tiempos de las cirugías son independientes y normalmente distribuidos.
+```{r}
+meanTime = 129 #min
+sd = 14 #min
+# media
+meanTotal = 129 * 10 # minutos
+print(meanTotal)
+# varianza
+varianza = sd * sd * 10 * 10 # minutos^2
+print(varianza)
+```
+
+### Ejercicio 6
+##### 6. Aborde los ejercicios 1 y 4 efectuando una aproximación mediante una distribución normal. ¿Qué puede concluir?
+
+##### Ejercicio 1
+```{r}
+aproxBin = function(X,n,p){
+  return((X+0.5-n*p)/sqrt(n*p*(1-p)))
+}
+x = 3
+n = 3
+p = 0.8
+pnorm(aproxBin(x, n, p), 0, 1)
+```
+La aproximación mediante dist. normal se puede comprobar mediante n * p = 2,4, lo cual es menor que 5, por lo tanto no es buena y los valores son distantes.
+
+##### Ejercicio 4b
+```{r}
+x = 5
+lambda = 8
+z = function(k,lambda){return((k-lambda)/sqrt(lambda))}
+prob = pnorm(z(x,lambda),0,1)
+print(prob)
+```
+
+##### Ejercicio 4c
+```{r}
+x = (0:3)
+sum(pnorm(z(x,lambda),0,1))
+```
+
+Cómo se puede apreciar el lambda es 8, por lo que se estima que sea una buena aproximación y cómo se puede apreciar los valores son cercanos pero no precisos, por lo que no se podría decirse que es una aproximación buena.
